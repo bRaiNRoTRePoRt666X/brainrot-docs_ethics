@@ -1,0 +1,40 @@
+name: Ethics CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-ethics:
+    runs-on: ubuntu-latest
+    name: Validate Ethics Compliance
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Make script executable
+        run: chmod +x scripts/validate-ethics.sh
+
+      - name: Run ethics validator
+        run: ./scripts/validate-ethics.sh
+
+  label-pr:
+    runs-on: ubuntu-latest
+    name: Label PR
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Label PR with ethics tag
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['ethics-review']
+            });
